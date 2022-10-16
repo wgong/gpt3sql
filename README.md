@@ -15,6 +15,46 @@ $ cd app
 $ streamlit run app.py
 ```
 
+## Example
+
+Prompt submitted at [Playground](https://beta.openai.com/playground?mode=complete&model=davinci-instruct-beta)
+
+```
+"""
+Table customers, columns = [CustomerId, FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId]
+Create a SQLite query for all customers in Texas named Jane
+"""
+
+```
+
+
+The Python code:
+```
+import os
+import openai
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# POST /v1/completions
+
+response = openai.Completion.create(
+  model="davinci-instruct-beta",
+  prompt="\"\"\"\nTable customers, columns = [CustomerId, FirstName, LastName,  State]\nCreate a SQLite query for all customers in Texas named Jane\n\"\"\"\n\n\n",
+  temperature=0,
+  max_tokens=256,
+  top_p=1,
+  frequency_penalty=0,
+  presence_penalty=0
+)
+
+```
+
+Response:
+```
+print(response["choices"][0]["text"])
+
+SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
+```
 ## References
 
 ### SQL generation
@@ -31,6 +71,9 @@ $ streamlit run app.py
 - https://www.searchenginejournal.com/build-seo-answerbox/436826/#close
 - https://gpt3demo.com/s/streamlit-io
 
+### General
+
+- [SUSTAINABLE AI: ENVIRONMENTAL IMPLICATIONS, CHALLENGES AND OPPORTUNITIES](https://proceedings.mlsys.org/paper/2022/file/ed3d2c21991e3bef5e069713af9fa6ca-Paper.pdf)
 
 ## Credits
 

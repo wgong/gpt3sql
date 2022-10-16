@@ -63,13 +63,39 @@ def go_home():
     st.subheader(f"{_STR_MENU_HOME}")
     st.markdown("""
     This [streamlit](https://streamlit.io/) app helps one explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) in terms of SQL generation
-    - Experiment with GPT-3 capability
+    - Experiment with GPT-3 capability [at Playground](https://beta.openai.com/playground?mode=complete)
     - Validate generated SQL against a [SQLite sample dataset](https://www.sqlitetutorial.net/sqlite-sample-database/)
 
     """, unsafe_allow_html=True)
 
 def do_sql_gen():
     st.subheader(f"{_STR_MENU_SQL_GEN}")
+    prompt_value = '''
+    Table customers, columns = [CustomerId, FirstName, LastName,  State]
+    Create a SQLite query for all customers in Texas named Jane
+    '''
+    prompt = st.text_area("Prompt:", value=prompt_value, height=200)
+    prompts = [i.strip() for i in prompt.split('\n') if i.strip()]
+    # st.write(prompt)
+    if st.button("Submit"):
+        openai.api_key = OPENAI_API_KEY
+        openai_mode = st.session_state.get("openai_mode", "Complete")
+        if openai_mode != "Complete":
+            st.error(f"OpenAI mode {openai_mode} not yet implemented")
+            return
+
+        response = openai.Completion.create(
+            model=st.session_state.get("openai_model", "davinci-instruct-beta"), 
+            prompt="\"\"\"\n" + '\n'.join(prompts) + "\n\"\"\"\n\n\n",
+            temperature=st.session_state.get("openai_temp", 0),
+            max_tokens=st.session_state.get("openai_max_token", 256),
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        resp_str = response["choices"][0]["text"]
+        st.write("Response:")
+        st.info(resp_str.split('"""')[0])
 
 def do_sql_run():
     st.subheader(f"{_STR_MENU_SQL_RUN}")
@@ -96,9 +122,32 @@ def do_sqlite_sample_db():
 
 def do_settings():
     st.subheader(f"{_STR_MENU_SETTINGS}")
-    st.write(f"OPENAI_API_KEY = {OPENAI_API_KEY}")
-    st.write(f"DB_FILE = {DB_FILE}")    
+    OPENAI_MODES = ["Complete", "Insert", "Edit"]
+    OPENAI_MODELS = ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
+    with st.expander("Playground Settings", expanded=True):
+        openai_mode = st.selectbox("Mode", options=OPENAI_MODES, index=OPENAI_MODES.index("Complete"), key="openai_mode")
+        openai_model = st.selectbox("Model", options=OPENAI_MODELS, index=OPENAI_MODELS.index("davinci-instruct-beta"), key="openai_model")
+        openai_temp = st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=0.1, key="openai_temp")
+        openai_max_token = st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=256, key="openai_max_token")
+        openai_input_prefix = st.text_input("Input prefix", value="input: ", key="openai_input_prefix")
+        openai_input_suffix = st.text_input("Input suffix", value="\n", placeholder="1 newline char", key="openai_input_suffix")
+        openai_output_prefix = st.text_input("Output prefix", value="output: ", key="openai_output_prefix")
+        openai_output_suffix = st.text_input("Output suffix", value="\n\n", placeholder="2 newline chars", key="openai_output_suffix")
 
+    openai_api_key = st.text_input("OpenAI API Key", value=OPENAI_API_KEY, key="openai_api_key")
+    sqlite_db_file = st.text_input("SQLite DB File", value=DB_FILE, key="sqlite_db_file")
+
+    col_left, col_right, _, _, _, _ = st.columns(6)
+
+    with col_left:
+        if st.button("Load"):
+            # load settings.yaml
+            pass
+
+    with col_right:
+        if st.button("Save"):
+            # save settings.yaml
+            pass
 
 #####################################################
 # setup menu_items 
