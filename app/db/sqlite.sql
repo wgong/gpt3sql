@@ -8,3 +8,11 @@ create table t_gpt3_log (
 	output text,
 	comment text
 );
+
+SELECT 
+    name
+FROM 
+    sqlite_schema
+WHERE 
+    type ='table' AND 
+    name NOT LIKE 'sqlite_%';

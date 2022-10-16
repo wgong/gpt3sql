@@ -7,12 +7,15 @@ Develop a streamlit app to explore GPT-3 Codex capability (https://beta.openai.c
 - Target SQLite database;
 - Use sample dataset from  https://www.sqlitetutorial.net/sqlite-sample-database/;
 
+## Get started
+
+```
+$ pip install -r requirements.txt
+$ cd app
+$ streamlit run app.py
+```
 
 ## References
-
-### GPT3 tool
-
-- https://github.com/shreyashankar/gpt3-sandbox
 
 ### SQL generation
 
@@ -27,3 +30,8 @@ Develop a streamlit app to explore GPT-3 Codex capability (https://beta.openai.c
 - https://discuss.streamlit.io/t/the-office-chatbot-using-gpt-3/22787
 - https://www.searchenginejournal.com/build-seo-answerbox/436826/#close
 - https://gpt3demo.com/s/streamlit-io
+
+
+## Credits
+
+- Reused GPT class from [gpt3-sandbox repo](https://github.com/shreyashankar/gpt3-sandbox)
