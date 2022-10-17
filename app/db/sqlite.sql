@@ -1,3 +1,5 @@
+select * from t_gpt3_log;
+
 create table t_gpt3_log (
 	uuid  TEXT NOT NULL,
 	ts    text,
