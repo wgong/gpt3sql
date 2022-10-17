@@ -6,16 +6,20 @@ Streamlit app to experiment with GPT3 models
 #####################################################
 # generic import
 from datetime import date, datetime, timedelta
+from os.path import exists, join
 from uuid import uuid4
 import sqlite3
 import pandas as pd
+import yaml
 
 import streamlit as st
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
 # import modules of this app 
 from api.gpt import *
-from cfg.settings import *
+
+CFG = dict()
+KEY = dict()
 
 _STR_APP_NAME               = "GPT-3 SQL"
 _STR_MENU_HOME              = "Welcome"
@@ -33,17 +37,52 @@ st.set_page_config(
 #####################################################
 # Helpers
 #####################################################
+def load_settings():
+    global CFG,KEY
+    with open("cfg/settings.yaml") as f:
+        CFG = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+    if exists(CFG["API_KEY_FILE"]):
+        with open(CFG["API_KEY_FILE"]) as f:
+            KEY = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+
+def save_settings():
+    global CFG,KEY
+    with open("cfg/settings.yaml", "w") as f:
+        modes = CFG["Mode"]
+        models = CFG["Model"]
+        CFG = {
+            "Mode": move_item_to_first(modes, st.session_state.get("openai_mode")),
+            "Model": move_item_to_first(models, st.session_state.get("openai_model")),
+            "Temperature": st.session_state.get("openai_temp"),
+            "Maximum_length": st.session_state.get("openai_max_token"),
+            "Input_prefix": st.session_state.get("openai_input_prefix"),
+            "Input_suffix": st.session_state.get("openai_input_suffix"),
+            "Output_prefix": st.session_state.get("openai_output_prefix"),
+            "Output_suffix": st.session_state.get("openai_output_suffix"),
+            "API_KEY_FILE": st.session_state.get("api_key_file"),
+            "DB_FILE": st.session_state.get("sqlite_db_file"),
+        }
+        yaml.dump(CFG, f, default_flow_style=False)
+
+    with open(CFG["API_KEY_FILE"], "w") as f:
+        KEY = {
+            "OPENAI_API_KEY": st.session_state.get("openai_api_key")
+        }
+        yaml.dump(KEY, f, default_flow_style=False)
 
 class DBConn(object):
-    def __init__(self, db_file=DB_FILE):
+    def __init__(self, db_file):
         self.conn = sqlite3.connect(db_file)
     def __enter__(self):
         return self.conn
     def __exit__(self, type, value, traceback):
         self.conn.close()
 
+
 def get_tables():
-    with DBConn() as _conn:
+    with DBConn(CFG["DB_FILE"]) as _conn:
         sql_stmt = f'''
         SELECT 
             name
@@ -54,8 +93,23 @@ def get_tables():
             name NOT LIKE 'sqlite_%';
         '''
         df = pd.read_sql(sql_stmt, _conn)
-        return df["name"].to_list()
+    return df["name"].to_list()
 
+def move_item_to_first(lst, item):
+    """Move item found in a list to position 0
+    """
+    try:
+        idx = lst.index(item)
+    except:
+        idx = -1
+    if idx < 1:
+        return lst
+    
+    lst_new = lst.copy()
+    lst_new.pop(idx)
+    lst_new.insert(0, item)
+    return lst_new
+    
 #####################################################
 # Menu Handlers
 #####################################################
@@ -70,6 +124,11 @@ def go_home():
 
 def do_sql_gen():
     st.subheader(f"{_STR_MENU_SQL_GEN}")
+    OPENAI_API_KEY = KEY.get("OPENAI_API_KEY", {})
+    if not OPENAI_API_KEY:
+        st.error("OPENAI_API_KEY is missing, signup with GPT-3 at https://beta.openai.com/ and add your API_KEY to settings")
+        return
+
     prompt_value = '''
     Table customers, columns = [CustomerId, FirstName, LastName,  State]
     Create a SQLite query for all customers in Texas named Jane
@@ -95,15 +154,17 @@ def do_sql_gen():
         )
         resp_str = response["choices"][0]["text"]
         st.write("Response:")
-        st.info(resp_str.split('"""')[0])
+        sql_stml = resp_str.split('"""')[0]
+        st.info(sql_stml)
+        st.session_state["GENERATED_SQL_STMT"] = sql_stml
 
 def do_sql_run():
     st.subheader(f"{_STR_MENU_SQL_RUN}")
-    st.session_state["GENERATED_SQL_STMT"] = "select * from customers limit 10;"
-    gen_sql_stmt = st.session_state["GENERATED_SQL_STMT"]
+    # st.session_state["GENERATED_SQL_STMT"] = "select * from customers limit 10;"
+    gen_sql_stmt = st.session_state.get("GENERATED_SQL_STMT","")
     sql_stmt = st.text_area("Generated SQL:", value=gen_sql_stmt, height=200)
     if st.button("Execute Query ..."):
-        with DBConn() as _conn:
+        with DBConn(CFG["DB_FILE"]) as _conn:
             df = pd.read_sql(sql_stmt, _conn)
             st.dataframe(df)
 
@@ -115,39 +176,38 @@ def do_sqlite_sample_db():
     table_name = st.selectbox("Table:", tables, index=idx_default, key="table_name")
     sql_stmt = st.text_area("SQL:", value=f"select * from {table_name} limit 10;", height=100)
     if st.button("Execute Query ..."):
-        with DBConn() as _conn:
+        with DBConn(CFG["DB_FILE"]) as _conn:
             df = pd.read_sql(sql_stmt, _conn)
             st.dataframe(df)
 
 
 def do_settings():
     st.subheader(f"{_STR_MENU_SETTINGS}")
-    OPENAI_MODES = ["Complete", "Insert", "Edit"]
-    OPENAI_MODELS = ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
-    with st.expander("Playground Settings", expanded=True):
-        openai_mode = st.selectbox("Mode", options=OPENAI_MODES, index=OPENAI_MODES.index("Complete"), key="openai_mode")
-        openai_model = st.selectbox("Model", options=OPENAI_MODELS, index=OPENAI_MODELS.index("davinci-instruct-beta"), key="openai_model")
-        openai_temp = st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=0.1, key="openai_temp")
-        openai_max_token = st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=256, key="openai_max_token")
-        openai_input_prefix = st.text_input("Input prefix", value="input: ", key="openai_input_prefix")
-        openai_input_suffix = st.text_input("Input suffix", value="\n", placeholder="1 newline char", key="openai_input_suffix")
-        openai_output_prefix = st.text_input("Output prefix", value="output: ", key="openai_output_prefix")
-        openai_output_suffix = st.text_input("Output suffix", value="\n\n", placeholder="2 newline chars", key="openai_output_suffix")
+    if st.button("Load settings"):
+        load_settings()
 
-    openai_api_key = st.text_input("OpenAI API Key", value=OPENAI_API_KEY, key="openai_api_key")
-    sqlite_db_file = st.text_input("SQLite DB File", value=DB_FILE, key="sqlite_db_file")
+    with st.form(key="settings"):
+        OPENAI_MODES = CFG["Mode"] # ["Complete", "Insert", "Edit"]
+        OPENAI_MODELS = CFG["Model"] # ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
+        st.selectbox("Mode", options=OPENAI_MODES, index=0, key="openai_mode")
+        st.selectbox("Model", options=OPENAI_MODELS, index=0, key="openai_model")
+        st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=CFG["Temperature"], key="openai_temp")
+        st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=CFG["Maximum_length"], key="openai_max_token")
+        st.text_input("Input prefix", value=CFG["Input_prefix"], key="openai_input_prefix")
+        st.text_input("Input suffix", value=CFG["Input_suffix"], placeholder="1 newline char", key="openai_input_suffix")
+        st.text_input("Output prefix", value=CFG["Output_prefix"], key="openai_output_prefix")
+        st.text_input("Output suffix", value=CFG["Output_suffix"], placeholder="2 newline chars", key="openai_output_suffix")
 
-    col_left, col_right, _, _, _, _ = st.columns(6)
+        st.text_input("SQLite DB File", value=CFG["DB_FILE"], key="sqlite_db_file")
+        st.text_input("API Key File", value=CFG["API_KEY_FILE"], key="api_key_file")
+        st.text_input("OpenAI API Key", value=KEY.get("OPENAI_API_KEY", ""), key="openai_api_key")
+        st.form_submit_button('Save settings', on_click=save_settings)
 
-    with col_left:
-        if st.button("Load"):
-            # load settings.yaml
-            pass
+    st.write(f"File: cfg/settings.yaml")
+    st.write(CFG)     
+    st.write(f"File: {CFG['API_KEY_FILE']}")
+    st.write(KEY)
 
-    with col_right:
-        if st.button("Save"):
-            # save settings.yaml
-            pass
 
 #####################################################
 # setup menu_items 
@@ -192,6 +252,8 @@ def do_body():
     menu_dict[menu_item]["fn"]()
 
 def main():
+    load_settings()
+    # st.write(CFG)    
     do_sidebar()
     do_body()
 

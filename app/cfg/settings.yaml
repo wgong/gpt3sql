@@ -1,14 +1,12 @@
 ## Playground Settings
 
-Mode:
-  - Complete
-  - Insert
-  - Edit
+Mode: 
+  - "Complete"
 
 Model:
-  - davinci-instruct-beta
-  - text-davinci-002
-  - text-davinci-001
+  - "davinci-instruct-beta"
+  - "text-davinci-002"
+  - "text-davinci-001"
 
 Temperature: 0.1
 Maximum_length: 256
@@ -17,10 +15,11 @@ Input_suffix: "\n"
 Output_prefix: "output: "
 Output_suffix: "\n\n"
 
-
-# ENTER_YOUR_OWN_KEY_HERE
-OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
-
 # Database to store OpenAI request/responses
-DB_FILE: db/gpt3sql.sqlite
+DB_FILE: "db/gpt3sql.sqlite"
+
+API_KEY_FILE: "cfg/api_key.yaml"
+## place your own OpenAI API Key in above file
+## as follows
+# OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
 

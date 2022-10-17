@@ -1,5 +1,6 @@
-**/settings.py
-# **/settings.yaml
+**/api_key*.yaml
+**/settings*Copy.yaml
+**/Untitled*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
