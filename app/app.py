@@ -114,6 +114,10 @@ def _load_settings():
     if exists(CFG["API_KEY_FILE"]):
         with open(CFG["API_KEY_FILE"]) as f:
             KEY = yaml.load(f.read(), Loader=yaml.SafeLoader)
+    st.session_state["openai_mode"] = CFG["Mode"][0]
+    st.session_state["openai_model"] = CFG["Model"][0]
+    st.session_state["openai_temp"] = CFG["Temperature"]
+    st.session_state["openai_max_token"] = CFG["Maximum_length"]
 
 
 def _save_settings():
@@ -328,8 +332,8 @@ def do_sql_gen():
         return
 
     prompt_value = '''
-    Table customers, columns = [CustomerId, FirstName, LastName,  State]
-    Create a SQLite query for all customers in Texas named Richard
+    Table customers, columns = [CustomerId, FirstName, LastName,  City, State, Country]
+    Create a SQLite query for all customers in city of Cupertino, country of USA
     '''
     prompt = st.text_area("Prompt:", value=prompt_value, height=200)
     prompt_s = '\n'.join([i.strip() for i in prompt.split('\n') if i.strip()])
@@ -340,12 +344,9 @@ def do_sql_gen():
         if openai_mode != "Complete":
             st.error(f"OpenAI mode {openai_mode} not yet implemented")
             return
-        if PROMPT_DELIMITOR in prompt_s:
-            prompt_str = "\n" + prompt_s + "\n\n\n\n"
-        else:
-            prompt_str = f"{PROMPT_DELIMITOR}\n" + prompt_s + f"\n{PROMPT_DELIMITOR}\n\n\n"
-        openai_mode = st.session_state.get("openai_model")
-        openai_model = st.session_state.get("openai_model", "davinci-instruct-beta")
+
+        openai_model = st.session_state.get("openai_model", "text-davinci-002")
+        print(f"model = {openai_model}")
         openai_temp = st.session_state.get("openai_temp", 0)
         openai_max_token = st.session_state.get("openai_max_token", 256)
         settings_dict = {
@@ -354,6 +355,11 @@ def do_sql_gen():
             "Temperature": openai_temp,
             "Maximum_length": openai_max_token,
         }
+
+        if PROMPT_DELIMITOR in prompt_s:
+            prompt_str = "\n" + prompt_s + "\n\n\n\n"
+        else:
+            prompt_str = f"{PROMPT_DELIMITOR}\n" + prompt_s + f"\n{PROMPT_DELIMITOR}\n\n\n"
 
         try:
             response = openai.Completion.create(
@@ -404,22 +410,24 @@ def do_settings():
     if st.button("Load settings"):
         _load_settings()
 
-    with st.form(key="settings"):
-        OPENAI_MODES = CFG["Mode"] # ["Complete", "Insert", "Edit"]
-        OPENAI_MODELS = CFG["Model"] # ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
-        st.selectbox("Mode", options=OPENAI_MODES, index=0, key="openai_mode")
-        st.selectbox("Model", options=OPENAI_MODELS, index=0, key="openai_model")
-        st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=CFG["Temperature"], key="openai_temp")
-        st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=CFG["Maximum_length"], key="openai_max_token")
-        st.text_input("Input prefix", value=CFG["Input_prefix"], key="openai_input_prefix")
-        st.text_input("Input suffix", value=CFG["Input_suffix"], placeholder="1 newline char", key="openai_input_suffix")
-        st.text_input("Output prefix", value=CFG["Output_prefix"], key="openai_output_prefix")
-        st.text_input("Output suffix", value=CFG["Output_suffix"], placeholder="2 newline chars", key="openai_output_suffix")
+    # with st.form(key="settings"):
+    OPENAI_MODES = CFG["Mode"] # ["Complete", "Insert", "Edit"]
+    OPENAI_MODELS = CFG["Model"] # ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
+    st.selectbox("Mode", options=OPENAI_MODES, index=0, key="openai_mode")
+    st.selectbox("Model", options=OPENAI_MODELS, index=0, key="openai_model")
+    st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=CFG["Temperature"], key="openai_temp")
+    st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=CFG["Maximum_length"], key="openai_max_token")
+    st.text_input("Input prefix", value=CFG["Input_prefix"], key="openai_input_prefix")
+    st.text_input("Input suffix", value=CFG["Input_suffix"], placeholder="1 newline char", key="openai_input_suffix")
+    st.text_input("Output prefix", value=CFG["Output_prefix"], key="openai_output_prefix")
+    st.text_input("Output suffix", value=CFG["Output_suffix"], placeholder="2 newline chars", key="openai_output_suffix")
 
-        st.text_input("SQLite DB File", value=CFG["DB_FILE"], key="sqlite_db_file")
-        st.text_input("API Key File", value=CFG["API_KEY_FILE"], key="api_key_file")
-        st.text_input("OpenAI API Key", value=KEY.get("OPENAI_API_KEY", ""), key="openai_api_key")
-        st.form_submit_button('Save settings', on_click=_save_settings)
+    st.text_input("SQLite DB File", value=CFG["DB_FILE"], key="sqlite_db_file")
+    st.text_input("API Key File", value=CFG["API_KEY_FILE"], key="api_key_file")
+    st.text_input("OpenAI API Key", value=KEY.get("OPENAI_API_KEY", ""), key="openai_api_key")
+    # st.form_submit_button('Save settings', on_click=_save_settings)
+    if st.button('Save settings'):
+        _save_settings()
 
     st.write(f"File: cfg/settings.yaml")
     st.write(CFG)     
