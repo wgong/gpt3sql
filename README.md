@@ -9,11 +9,12 @@ Develop a streamlit app to explore GPT-3 Codex capability (https://beta.openai.c
 
 ## Get started
 
-Get your own OpenAI API Key and save it in the file `app/cfg/api_key.yaml` as
+Get your own API Key at https://beta.openai.com/, save it into a new file at `app/cfg/api_key.yaml` (make sure this file is gitignored):
 ```
 OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
 ```
 
+Run the following commands a shell terminal:
 ```
 $ pip install -r requirements.txt
 $ cd app
