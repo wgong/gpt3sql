@@ -1,0 +1,7 @@
+Model Name| Description| Strength
+"text-davinci-002"| "Most capable model in the GPT-3 series. Can perform any task the other models can, often with less context. It can process up to 4000 tokens per request."| "complex intent, cause and effect, creative generation, search, summarization for audience."
+"text-davinci-001"| "Older version of text-davinci-002 model"| "complex intent, cause and effect, creative generation, search, summarization for audience."
+"text-curie-001"| "Very capable, but faster and lower cost than text-davinci-002 model", "Language translation, complext classification, sentiment, summarization."
+"text-babbage-001"| "capable of straightforward tasks, very faster and lower cost"| "Moderate classification, semantic search."
+"text-ada-001"| "capable of simple tasks, usually the fastest model in the GPT-3 series, and lowest cost"| "Parsing text, simple classification, address correction, keywords."
+"davinci-instruct-beta"| "This is an older model, use text-davinci-002 instead"| "shorter and more naturally phrased prompts, complex intent, cause and effect."

@@ -9,6 +9,11 @@ Develop a streamlit app to explore GPT-3 Codex capability (https://beta.openai.c
 
 ## Get started
 
+Get your own OpenAI API Key and save it in the file `app/cfg/api_key.yaml` as
+```
+OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
+```
+
 ```
 $ pip install -r requirements.txt
 $ cd app
@@ -56,6 +61,12 @@ print(response["choices"][0]["text"])
 SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
 ```
 ## References
+
+### Intro
+
+- [GPT-3: All you need to know about the AI language model](https://www.sigmoid.com/blogs/gpt-3-all-you-need-to-know-about-the-ai-language-model/)
+- [New Version of GPT-3 Is Much Better](https://towardsdatascience.com/the-new-version-of-gpt-3-is-much-much-better-53ac95f21cfb)
+
 
 ### SQL generation
 
