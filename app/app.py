@@ -7,10 +7,12 @@ Streamlit app to experiment with GPT3 models
 # generic import
 from datetime import datetime, date, timedelta
 from os.path import exists
+from traceback import format_exc
 from uuid import uuid4
 import sqlite3
 import pandas as pd
 import yaml
+from traceback import format_exc
 
 import streamlit as st
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
@@ -309,7 +311,7 @@ def do_welcome():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    ##### Brief descriptions of OpenAI models
+    ##### OpenAI models
     """, unsafe_allow_html=True)
     df = pd.read_csv("../docs/openai_models.csv", header=0, sep='|')
     st.table(df)
@@ -353,22 +355,24 @@ def do_sql_gen():
             "Maximum_length": openai_max_token,
         }
 
-        response = openai.Completion.create(
-            model=openai_model, 
-            prompt=prompt_str,
-            temperature=openai_temp,
-            max_tokens=openai_max_token,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        st.write("Response:")
-        resp_str = response["choices"][0]["text"]
-        sql_stmt = resp_str.split(PROMPT_DELIMITOR)[0]
-        st.info(resp_str)
-        st.session_state["GENERATED_SQL_STMT"] = sql_stmt
-        _insert_log(use_case="sql_gen", settings=str(settings_dict), prompt=prompt_str, input="", output=sql_stmt)
-
+        try:
+            response = openai.Completion.create(
+                model=openai_model, 
+                prompt=prompt_str,
+                temperature=openai_temp,
+                max_tokens=openai_max_token,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
+            st.write("Response:")
+            resp_str = response["choices"][0]["text"]
+            sql_stmt = resp_str.split(PROMPT_DELIMITOR)[0]
+            st.info(resp_str)
+            st.session_state["GENERATED_SQL_STMT"] = sql_stmt
+            _insert_log(use_case="sql_gen", settings=str(settings_dict), prompt=prompt_str, input="", output=sql_stmt)
+        except:
+            st.error(format_exc())
 
 def do_sql_run():
     st.subheader(f"{_STR_MENU_SQL_RUN}")
@@ -377,9 +381,11 @@ def do_sql_run():
     sql_stmt = st.text_area("Generated SQL:", value=gen_sql_stmt, height=200)
     if st.button("Execute Query ..."):
         with DBConn(CFG["DB_FILE"]) as _conn:
-            df = pd.read_sql(sql_stmt, _conn)
-            st.dataframe(df)
-
+            try:
+                df = pd.read_sql(sql_stmt, _conn)
+                st.dataframe(df)
+            except:
+                st.error(format_exc())
 
 def do_sqlite_sample_db():
     st.subheader(f"{_STR_MENU_SQLITE_SAMPLE}")

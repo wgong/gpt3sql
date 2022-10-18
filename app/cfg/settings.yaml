@@ -1,28 +1,25 @@
-## Playground Settings
+API_KEY_FILE: cfg/api_key.yaml
+DB_FILE: db/gpt3sql.sqlite
+Input_prefix: 'input: '
+Input_suffix: '
 
-Mode: 
-  - "Complete"
-
-Model:
-  - "text-davinci-002"
-  - "text-davinci-001"
-  - "text-curie-001"
-  - "text-babbage-001"
-  - "text-ada-001"
-  - "davinci-instruct-beta"
-
-Temperature: 0.1
+  '
 Maximum_length: 256
-Input_prefix: "input: "
-Input_suffix: "\n"
-Output_prefix: "output: "
-Output_suffix: "\n\n"
+Mode:
+- Complete
+Model:
+- code-davinci-002
+- text-davinci-002
+- text-davinci-001
+- text-curie-001
+- text-babbage-001
+- text-ada-001
+- davinci-instruct-beta
+- code-cushman-001
+- code-davinci-001
+Output_prefix: 'output: '
+Output_suffix: '
 
-# Database to store OpenAI request/responses
-DB_FILE: "db/gpt3sql.sqlite"
 
-API_KEY_FILE: "cfg/api_key.yaml"
-## place your own OpenAI API Key in above file
-## as follows
-# OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
-
+  '
+Temperature: 0.1

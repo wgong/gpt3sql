@@ -63,19 +63,22 @@ SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
 ```
 ## References
 
-### Intro
+### OpenAI
 
+- [OpenAI Community Forum](https://community.openai.com/)
 - [GPT-3: All you need to know about the AI language model](https://www.sigmoid.com/blogs/gpt-3-all-you-need-to-know-about-the-ai-language-model/)
 - [New Version of GPT-3 Is Much Better](https://towardsdatascience.com/the-new-version-of-gpt-3-is-much-much-better-53ac95f21cfb)
 
+### SQL
 
-### SQL generation
-
+- [SQLTeam Forum](https://forums.sqlteam.com/)
+- [SQLite Tutorial](https://www.sqlitetutorial.net/)
 - https://blog.seekwell.io/gpt3
 - https://jman4190.medium.com/how-to-generate-sql-queries-from-text-with-gpt3-69ef7c44f47a
 
-### Streamlit powered by GPT-3
+### Streamlit
 
+- [Streamlit Community Forum](https://discuss.streamlit.io/)
 - https://github.com/pratos/gpt3-exp
 - https://lablab.ai/t/gpt3-streamlit
 - https://lazarinastoy.medium.com/3-gpt-3-streamlit-web-apps-that-will-help-you-supercharge-marketing-processes-84c7a3290b04
@@ -83,7 +86,7 @@ SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
 - https://www.searchenginejournal.com/build-seo-answerbox/436826/#close
 - https://gpt3demo.com/s/streamlit-io
 
-### General
+### Others
 
 - [SUSTAINABLE AI: ENVIRONMENTAL IMPLICATIONS, CHALLENGES AND OPPORTUNITIES](https://proceedings.mlsys.org/paper/2022/file/ed3d2c21991e3bef5e069713af9fa6ca-Paper.pdf)
 
