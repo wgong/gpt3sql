@@ -395,8 +395,13 @@ def do_code_run():
     if selected_row is None and gen_code is None:
         return
 
-    use_case = selected_row.get("use_case")
-    gen_code_val = gen_code or selected_row.get("output")
+    if selected_row is not None:
+        use_case = selected_row.get("use_case")
+        output = selected_row.get("output")
+    else:
+        use_case = "SQL"
+        output = None
+    gen_code_val = output or gen_code
     gen_code = st.text_area("Generated Code:", value=gen_code_val, height=200)
     if gen_code and st.button("Run ..."):
         if use_case == "SQL":
