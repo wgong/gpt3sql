@@ -1,6 +1,8 @@
 """
-Streamlit app to experiment with GPT3 models
+Streamlit app to experiment with GPT3 models for code generation (SQL, Python)
 """
+
+
 #####################################################
 # Imports
 #####################################################
@@ -20,7 +22,7 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 # import modules of this app 
 from api.gpt import *
 
-_STR_APP_NAME               = "GPT-3 SQL"
+_STR_APP_NAME               = "GPT-3 Codex"
 
 st.set_page_config(
      page_title=f'{_STR_APP_NAME}',
@@ -32,8 +34,8 @@ CFG = dict()
 KEY = dict()
 
 _STR_MENU_HOME              = "Welcome"
-_STR_MENU_SQL_GEN           = "Generate SQL"
-_STR_MENU_SQL_RUN           = "Execute SQL"
+_STR_MENU_SQL_GEN           = "Generate Code"
+_STR_MENU_SQL_RUN           = "Run Code"
 _STR_MENU_SQLITE_SAMPLE     = "Explore SQLite Sample DB"
 _STR_MENU_SETTINGS          = "Configure Settings"
 
@@ -56,6 +58,8 @@ _GRID_OPTIONS = {
 EDITABLE_COLUMNS = {
     "T_GPT3_LOG": [],   # ["comment"],
 }
+
+SRC_URL = "https://github.com/wgong/gpt3sql"
 
 #####################################################
 # Helpers (prefix with underscore)
@@ -149,9 +153,10 @@ def _save_settings():
 
 def _insert_log(use_case, settings, prompt, input, output, comment=''):
     with DBConn(CFG["DB_FILE"]) as _conn:
+        use_case = st.session_state.get("openai_use_case", "SQL")
         insert_sql = f"""
             insert into T_GPT3_LOG (
-                uuid, ts, use_case, settings, prompt, input, output, comment
+                uuid, ts, use_case, settings, prompt, input, output
             )
             values (
                 '{str(uuid4())}',
@@ -160,8 +165,7 @@ def _insert_log(use_case, settings, prompt, input, output, comment=''):
                 '{_escape_single_quote(settings)}',
                 '{_escape_single_quote(prompt)}',
                 '{_escape_single_quote(input)}',
-                '{_escape_single_quote(output)}',
-                '{_escape_single_quote(comment)}'
+                '{_escape_single_quote(output)}'
             );
         """
         print(insert_sql)
@@ -212,8 +216,9 @@ def _display_delete_log(selected_row):
         _delete_log()
 
 def _display_update_log(selected_row):
+    st.session_state.update({"LOG_SELECTED_ROW": selected_row})    
     with st.form(key="update_log"):
-        col_left,col_right = st.columns([6,4])
+        col_left,col_right = st.columns([5,5])
 
         with col_left:
 
@@ -286,15 +291,15 @@ def _display_grid_df(df,
 
 def _display_grid_gpt3_log():
     with st.expander("GPT3 Log", expanded=False):
-        st.write("Note: you may need to double-click the button")
+        st.write("Note: you may need to double-click Delete or Update button to commit log changes")
         with DBConn(CFG["DB_FILE"]) as _conn:
             sql_stmt = f"""
-                select ts,output,prompt,comment,input,settings,use_case,uuid
+                select ts,use_case,output,prompt,comment,input,settings,uuid
                 from T_GPT3_LOG order by ts desc
                 ;
             """
             df_log = pd.read_sql(sql_stmt, _conn)
-            grid_response = _display_grid_df(df_log, selection_mode="single", page_size=5, grid_height=210)
+            grid_response = _display_grid_df(df_log, selection_mode="single", page_size=5, grid_height=220)
             if grid_response:
                 selected_rows = grid_response['selected_rows']
                 if selected_rows:
@@ -307,35 +312,35 @@ def _display_grid_gpt3_log():
 #####################################################
 def do_welcome():
     st.subheader(f"{_STR_MENU_HOME}")
-    st.markdown("""
-    This [Streamlit App](https://streamlit.io/)   helps one explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) in terms of SQL generation   ([github](https://github.com/wgong/gpt3sql)) 
+    st.markdown(f"""
+    This [Streamlit App](https://streamlit.io/)   helps one explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) in terms of code generation   ([src]({SRC_URL}))
     - Experiment with GPT-3 capability [at OpenAI Playground](https://beta.openai.com/playground?mode=complete)
     - Validate generated SQL against a [SQLite sample dataset](https://www.sqlitetutorial.net/sqlite-sample-database/)
-    - 
+    
+    Note: You can generate code with model `text-davinci-002` although `code-davinci-002` is preferred. 
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    ##### OpenAI models
+    ##### [OpenAI models](https://beta.openai.com/docs/models/overview)
     """, unsafe_allow_html=True)
     df = pd.read_csv("../docs/openai_models.csv", header=0, sep='|')
     st.table(df)
 
 
-def do_sql_gen():
+def do_code_gen():
     st.subheader(f"{_STR_MENU_SQL_GEN}")
-
-    _display_grid_gpt3_log()
 
     OPENAI_API_KEY = KEY.get("OPENAI_API_KEY", {})
     if not OPENAI_API_KEY:
         st.error("OPENAI_API_KEY is missing, signup with GPT-3 at https://beta.openai.com/ and add your API_KEY to settings")
         return
 
+    use_case = st.selectbox("Use case", ["SQL", "Python", "Others"], index=0, key="openai_use_case")
     prompt_value = '''
     Table customers, columns = [CustomerId, FirstName, LastName,  City, State, Country]
     Create a SQLite query for all customers in city of Cupertino, country of USA
     '''
-    prompt = st.text_area("Prompt:", value=prompt_value, height=200)
+    prompt = st.text_area(f"Prompt: (delimitor {PROMPT_DELIMITOR} will be added if absent)", value=prompt_value, height=200)
     prompt_s = '\n'.join([i.strip() for i in prompt.split('\n') if i.strip()])
     # st.write(prompt)
     if st.button("Submit"):
@@ -373,25 +378,37 @@ def do_sql_gen():
             )
             st.write("Response:")
             resp_str = response["choices"][0]["text"]
-            sql_stmt = resp_str.split(PROMPT_DELIMITOR)[0]
+            # sql_stmt = resp_str.split(PROMPT_DELIMITOR)[0]
             st.info(resp_str)
-            st.session_state["GENERATED_SQL_STMT"] = sql_stmt
-            _insert_log(use_case="sql_gen", settings=str(settings_dict), prompt=prompt_str, input="", output=sql_stmt)
+            st.session_state["GENERATED_CODE"] = resp_str
+            _insert_log(use_case=use_case, settings=str(settings_dict), prompt=prompt_str, input="", output=resp_str)
         except:
             st.error(format_exc())
 
-def do_sql_run():
+def do_code_run():
     st.subheader(f"{_STR_MENU_SQL_RUN}")
-    # st.session_state["GENERATED_SQL_STMT"] = "select * from customers limit 10;"
-    gen_sql_stmt = st.session_state.get("GENERATED_SQL_STMT","")
-    sql_stmt = st.text_area("Generated SQL:", value=gen_sql_stmt, height=200)
-    if st.button("Execute Query ..."):
-        with DBConn(CFG["DB_FILE"]) as _conn:
-            try:
-                df = pd.read_sql(sql_stmt, _conn)
-                st.dataframe(df)
-            except:
-                st.error(format_exc())
+
+    _display_grid_gpt3_log()
+
+    selected_row = st.session_state.get("LOG_SELECTED_ROW", None)
+    gen_code = st.session_state.get("GENERATED_CODE", None)
+    if selected_row is None and gen_code is None:
+        return
+
+    use_case = selected_row.get("use_case")
+    gen_code_val = gen_code or selected_row.get("output")
+    gen_code = st.text_area("Generated Code:", value=gen_code_val, height=200)
+    if gen_code and st.button("Run ..."):
+        if use_case == "SQL":
+            with DBConn(CFG["DB_FILE"]) as _conn:
+                try:
+                    df = pd.read_sql(gen_code, _conn)
+                    st.dataframe(df)
+                except:
+                    st.error(format_exc())
+
+        else:
+            st.error(f"Executing {use_case} is not yet implemented")
 
 def do_sqlite_sample_db():
     st.subheader(f"{_STR_MENU_SQLITE_SAMPLE}")
@@ -440,8 +457,8 @@ def do_settings():
 #####################################################
 menu_dict = {
     _STR_MENU_HOME :                 {"fn": do_welcome},
-    _STR_MENU_SQL_GEN:               {"fn": do_sql_gen},
-    _STR_MENU_SQL_RUN:               {"fn": do_sql_run},
+    _STR_MENU_SQL_GEN:               {"fn": do_code_gen},
+    _STR_MENU_SQL_RUN:               {"fn": do_code_run},
     _STR_MENU_SQLITE_SAMPLE:         {"fn": do_sqlite_sample_db},
     _STR_MENU_SETTINGS:              {"fn": do_settings},
 }
