@@ -1,6 +1,8 @@
 """
-Streamlit app to experiment with GPT3 models
+Streamlit app to experiment with GPT3 models for code generation (SQL, Python)
 """
+
+
 #####################################################
 # Imports
 #####################################################
@@ -20,7 +22,7 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 # import modules of this app 
 from api.gpt import *
 
-_STR_APP_NAME               = "GPT-3 SQL"
+_STR_APP_NAME               = "GPT-3 Codex"
 
 st.set_page_config(
      page_title=f'{_STR_APP_NAME}',
@@ -32,8 +34,8 @@ CFG = dict()
 KEY = dict()
 
 _STR_MENU_HOME              = "Welcome"
-_STR_MENU_SQL_GEN           = "Generate SQL"
-_STR_MENU_SQL_RUN           = "Execute SQL"
+_STR_MENU_SQL_GEN           = "Generate Code"
+_STR_MENU_SQL_RUN           = "Review/Run Code"
 _STR_MENU_SQLITE_SAMPLE     = "Explore SQLite Sample DB"
 _STR_MENU_SETTINGS          = "Configure Settings"
 
@@ -53,8 +55,10 @@ _GRID_OPTIONS = {
     "paginationPageSize": 10,
 }
 
+TABLE_GPT3_LOG = "T_GPT3_LOG"
+
 EDITABLE_COLUMNS = {
-    "T_GPT3_LOG": [],   # ["comment"],
+    TABLE_GPT3_LOG : [],   # ["comment"],
 }
 
 SRC_URL = "https://github.com/wgong/gpt3sql"
@@ -118,6 +122,7 @@ def _load_settings():
             KEY = yaml.load(f.read(), Loader=yaml.SafeLoader)
     st.session_state["openai_mode"] = CFG["Mode"][0]
     st.session_state["openai_model"] = CFG["Model"][0]
+    st.session_state["openai_use_case"] = CFG["Use_case"][0]
     st.session_state["openai_temp"] = CFG["Temperature"]
     st.session_state["openai_max_token"] = CFG["Maximum_length"]
 
@@ -127,9 +132,11 @@ def _save_settings():
     with open("cfg/settings.yaml", "w") as f:
         modes = CFG["Mode"]
         models = CFG["Model"]
+        use_cases = CFG["Use_case"]
         CFG = {
             "Mode": _move_item_to_first(modes, st.session_state.get("openai_mode")),
             "Model": _move_item_to_first(models, st.session_state.get("openai_model")),
+            "Use_case": _move_item_to_first(use_cases, st.session_state.get("openai_use_case")),
             "Temperature": st.session_state.get("openai_temp"),
             "Maximum_length": st.session_state.get("openai_max_token"),
             "Input_prefix": st.session_state.get("openai_input_prefix"),
@@ -152,8 +159,8 @@ def _save_settings():
 def _insert_log(use_case, settings, prompt, input, output, comment=''):
     with DBConn(CFG["DB_FILE"]) as _conn:
         insert_sql = f"""
-            insert into T_GPT3_LOG (
-                uuid, ts, use_case, settings, prompt, input, output, comment
+            insert into {TABLE_GPT3_LOG} (
+                uuid, ts, use_case, settings, prompt, input, output
             )
             values (
                 '{str(uuid4())}',
@@ -162,8 +169,7 @@ def _insert_log(use_case, settings, prompt, input, output, comment=''):
                 '{_escape_single_quote(settings)}',
                 '{_escape_single_quote(prompt)}',
                 '{_escape_single_quote(input)}',
-                '{_escape_single_quote(output)}',
-                '{_escape_single_quote(comment)}'
+                '{_escape_single_quote(output)}'
             );
         """
         print(insert_sql)
@@ -179,7 +185,7 @@ def _delete_log():
 
     with DBConn(CFG["DB_FILE"]) as _conn:
         delete_sql = f"""
-            delete from T_GPT3_LOG
+            delete from {TABLE_GPT3_LOG}
             where uuid = '{uuid}';
         """
         print(delete_sql)
@@ -198,7 +204,7 @@ def _update_log():
             if col == "uuid": continue
             set_clause.append(f"{col} = '{_escape_single_quote(val)}'")
         update_sql = f"""
-            update T_GPT3_LOG
+            update {TABLE_GPT3_LOG}
             set {', '.join(set_clause)}
             where uuid = '{data.get("uuid")}';
         """
@@ -214,24 +220,12 @@ def _display_delete_log(selected_row):
         _delete_log()
 
 def _display_update_log(selected_row):
+    st.session_state.update({"LOG_SELECTED_ROW": selected_row})    
     with st.form(key="update_log"):
-        col_left,col_right = st.columns([6,4])
+        col_left,col_right = st.columns([5,5])
+        data = {"ts": str(datetime.now())}
 
         with col_left:
-
-            id = st.text_input("uuid", value=selected_row.get("uuid"), disabled=True)
-            data = {"uuid" : id, "ts": str(datetime.now())}
-
-            settings_old = selected_row.get("settings")
-            settings = st.text_input("settings", value=settings_old, disabled=True)
-
-            prompt_old = selected_row.get("prompt")
-            prompt = st.text_area("prompt", value=prompt_old, height=50, disabled=True)
-
-            input_old = selected_row.get("input")
-            input = st.text_area("input", value=input_old, height=30, disabled=True)
-
-        with col_right:
 
             ts_old = selected_row.get("ts")
             ts = st.text_input("ts", value=ts_old, disabled=True)
@@ -245,9 +239,25 @@ def _display_update_log(selected_row):
             # print(f"output_old = {output_old}")
             # print(f"output = {output}")
 
-            comment_old = selected_row.get("comment")
-            comment = st.text_area("comment", value=comment_old, height=30)
-            if comment != comment_old: data.update({"comment" : comment})
+            valid_output_old = selected_row.get("valid_output")
+            valid_output = st.text_area("valid_output", value=valid_output_old, height=50)
+            if valid_output != valid_output_old: data.update({"valid_output" : valid_output})
+        with col_right:
+
+            id = st.text_input("uuid", value=selected_row.get("uuid"), disabled=True)
+            data.update({"uuid" : id})
+
+            settings_old = selected_row.get("settings")
+            settings = st.text_input("settings", value=settings_old, disabled=True)
+
+            prompt_old = selected_row.get("prompt")
+            prompt = st.text_area("prompt", value=prompt_old, height=50, disabled=True)
+
+            input_old = selected_row.get("input")
+            input = st.text_area("input", value=input_old, height=30, disabled=True)
+        comment_old = selected_row.get("comment")
+        comment = st.text_input("comment", value=comment_old)
+        if comment != comment_old: data.update({"comment" : comment})
 
         st.session_state.update({"LOG_UPDATE_DATA": data})
         # print(data)
@@ -271,7 +281,7 @@ def _display_grid_df(df,
         )
     gb.configure_pagination(paginationAutoPageSize=False, 
         paginationPageSize=page_size)
-    gb.configure_columns(EDITABLE_COLUMNS["T_GPT3_LOG"], editable=True)
+    gb.configure_columns(EDITABLE_COLUMNS[f"{TABLE_GPT3_LOG}"], editable=True)
     gb.configure_grid_options(domLayout='normal')
     grid_response = AgGrid(
         df, 
@@ -287,16 +297,16 @@ def _display_grid_df(df,
     return grid_response
 
 def _display_grid_gpt3_log():
-    with st.expander("GPT3 Log", expanded=False):
-        st.write("Note: you may need to double-click the button")
+    with st.expander("Review GPT3 Log Table: ", expanded=False):
+        st.write("Note: you may need to double-click Delete or Update button to commit changes")
         with DBConn(CFG["DB_FILE"]) as _conn:
             sql_stmt = f"""
-                select ts,output,prompt,comment,input,settings,use_case,uuid
-                from T_GPT3_LOG order by ts desc
+                select ts,use_case,output,valid_output,comment,prompt,input,settings,uuid
+                from {TABLE_GPT3_LOG} order by ts desc
                 ;
             """
             df_log = pd.read_sql(sql_stmt, _conn)
-            grid_response = _display_grid_df(df_log, selection_mode="single", page_size=5, grid_height=210)
+            grid_response = _display_grid_df(df_log, selection_mode="single", page_size=5, grid_height=220)
             if grid_response:
                 selected_rows = grid_response['selected_rows']
                 if selected_rows:
@@ -311,34 +321,34 @@ def _display_grid_gpt3_log():
 def do_welcome():
     st.subheader(f"{_STR_MENU_HOME}")
     st.markdown(f"""
-    This [Streamlit App](https://streamlit.io/)   helps one explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) in terms of SQL generation   ([github](SRC_URL)) 
+    This [Streamlit App](https://streamlit.io/)   helps one explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) in terms of code generation   ([src]({SRC_URL}))
     - Experiment with GPT-3 capability [at OpenAI Playground](https://beta.openai.com/playground?mode=complete)
     - Validate generated SQL against a [SQLite sample dataset](https://www.sqlitetutorial.net/sqlite-sample-database/)
-    - 
+    
+    Note: You can generate code with model `text-davinci-002` although `code-davinci-002` is preferred. 
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    ##### OpenAI models
+    ##### [OpenAI models](https://beta.openai.com/docs/models/overview)
     """, unsafe_allow_html=True)
     df = pd.read_csv("../docs/openai_models.csv", header=0, sep='|')
     st.table(df)
 
 
-def do_sql_gen():
+def do_code_gen():
     st.subheader(f"{_STR_MENU_SQL_GEN}")
-
-    _display_grid_gpt3_log()
 
     OPENAI_API_KEY = KEY.get("OPENAI_API_KEY", {})
     if not OPENAI_API_KEY:
         st.error("OPENAI_API_KEY is missing, signup with GPT-3 at https://beta.openai.com/ and add your API_KEY to settings")
         return
 
+    openai_use_case = st.selectbox("Use case", CFG["Use_case"], key="openai_use_case_2")
     prompt_value = '''
     Table customers, columns = [CustomerId, FirstName, LastName,  City, State, Country]
     Create a SQLite query for all customers in city of Cupertino, country of USA
     '''
-    prompt = st.text_area("Prompt:", value=prompt_value, height=200)
+    prompt = st.text_area(f"Prompt: (delimitor {PROMPT_DELIMITOR} will be added if absent)", value=prompt_value, height=200)
     prompt_s = '\n'.join([i.strip() for i in prompt.split('\n') if i.strip()])
     # st.write(prompt)
     if st.button("Submit"):
@@ -355,6 +365,7 @@ def do_sql_gen():
         settings_dict = {
             "Mode": openai_mode,
             "Model": openai_model,
+            "Use_case": openai_use_case,
             "Temperature": openai_temp,
             "Maximum_length": openai_max_token,
         }
@@ -376,25 +387,41 @@ def do_sql_gen():
             )
             st.write("Response:")
             resp_str = response["choices"][0]["text"]
-            sql_stmt = resp_str.split(PROMPT_DELIMITOR)[0]
             st.info(resp_str)
-            st.session_state["GENERATED_SQL_STMT"] = sql_stmt
-            _insert_log(use_case="sql_gen", settings=str(settings_dict), prompt=prompt_str, input="", output=sql_stmt)
+            st.session_state["GENERATED_CODE"] = resp_str
+            _insert_log(use_case=openai_use_case, settings=str(settings_dict), prompt=prompt_str, input="", output=resp_str)
         except:
             st.error(format_exc())
 
-def do_sql_run():
+def do_code_run():
     st.subheader(f"{_STR_MENU_SQL_RUN}")
-    # st.session_state["GENERATED_SQL_STMT"] = "select * from customers limit 10;"
-    gen_sql_stmt = st.session_state.get("GENERATED_SQL_STMT","")
-    sql_stmt = st.text_area("Generated SQL:", value=gen_sql_stmt, height=200)
-    if st.button("Execute Query ..."):
-        with DBConn(CFG["DB_FILE"]) as _conn:
-            try:
-                df = pd.read_sql(sql_stmt, _conn)
-                st.dataframe(df)
-            except:
-                st.error(format_exc())
+
+    _display_grid_gpt3_log()
+
+    selected_row = st.session_state.get("LOG_SELECTED_ROW", None)
+    gen_code = st.session_state.get("GENERATED_CODE", None)
+    if selected_row is None and gen_code is None:
+        return
+
+    if selected_row is not None:
+        use_case = selected_row.get("use_case")
+        output = selected_row.get("output")
+    else:
+        use_case = "SQL"
+        output = None
+    gen_code_val = gen_code or output
+    gen_code = st.text_area("Generated Code:", value=gen_code_val, height=200)
+    if gen_code and st.button("Run ..."):
+        if use_case == "SQL":
+            with DBConn(CFG["DB_FILE"]) as _conn:
+                try:
+                    df = pd.read_sql(gen_code, _conn)
+                    st.dataframe(df)
+                except:
+                    st.error(format_exc())
+
+        else:
+            st.error(f"Executing {use_case} is not yet implemented")
 
 def do_sqlite_sample_db():
     st.subheader(f"{_STR_MENU_SQLITE_SAMPLE}")
@@ -416,8 +443,10 @@ def do_settings():
     # with st.form(key="settings"):
     OPENAI_MODES = CFG["Mode"] # ["Complete", "Insert", "Edit"]
     OPENAI_MODELS = CFG["Model"] # ["davinci-instruct-beta", "text-davinci-002", "text-davinci-001"]
+    OPENAI_USE_CASES = CFG["Use_case"]
     st.selectbox("Mode", options=OPENAI_MODES, index=0, key="openai_mode")
     st.selectbox("Model", options=OPENAI_MODELS, index=0, key="openai_model")
+    st.selectbox("Use case", options=OPENAI_USE_CASES, index=0, key="openai_use_case")
     st.slider("Temperature", min_value=0.0, max_value=1.0, step=0.01, value=CFG["Temperature"], key="openai_temp")
     st.slider("Maximum length", min_value=1, max_value=2048, step=1, value=CFG["Maximum_length"], key="openai_max_token")
     st.text_input("Input prefix", value=CFG["Input_prefix"], key="openai_input_prefix")
@@ -443,8 +472,8 @@ def do_settings():
 #####################################################
 menu_dict = {
     _STR_MENU_HOME :                 {"fn": do_welcome},
-    _STR_MENU_SQL_GEN:               {"fn": do_sql_gen},
-    _STR_MENU_SQL_RUN:               {"fn": do_sql_run},
+    _STR_MENU_SQL_GEN:               {"fn": do_code_gen},
+    _STR_MENU_SQL_RUN:               {"fn": do_code_run},
     _STR_MENU_SQLITE_SAMPLE:         {"fn": do_sqlite_sample_db},
     _STR_MENU_SETTINGS:              {"fn": do_settings},
 }

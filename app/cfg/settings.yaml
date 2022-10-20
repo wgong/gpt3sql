@@ -14,6 +14,19 @@ Model:
   - code-cushman-001
   - code-davinci-001
 
+Use_case:
+  - SQL
+  - Python
+  - JavaScript
+  - Go
+  - Others
+  - Perl
+  - PHP
+  - Ruby
+  - Swift
+  - TypeScript
+  - Shell
+
 Temperature: 0.1
 Maximum_length: 256
 Input_prefix: "input: "
