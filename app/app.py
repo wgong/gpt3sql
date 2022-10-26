@@ -15,12 +15,13 @@ import sqlite3
 import pandas as pd
 import yaml
 from traceback import format_exc
+import sys
+from io import StringIO
 
 import streamlit as st
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
-# import modules of this app 
-from api.gpt import *
+import openai
 
 _STR_APP_NAME               = "GPT-3 Codex"
 
@@ -156,11 +157,11 @@ def _save_settings():
 
 
 
-def _insert_log(use_case, settings, prompt, input, output, comment=''):
+def _insert_log(use_case, settings, prompt, output, comment=''):
     with DBConn(CFG["DB_FILE"]) as _conn:
         insert_sql = f"""
             insert into {TABLE_GPT3_LOG} (
-                uuid, ts, use_case, settings, prompt, input, output
+                uuid, ts, use_case, settings, prompt, output
             )
             values (
                 '{str(uuid4())}',
@@ -168,7 +169,6 @@ def _insert_log(use_case, settings, prompt, input, output, comment=''):
                 '{use_case}',
                 '{_escape_single_quote(settings)}',
                 '{_escape_single_quote(prompt)}',
-                '{_escape_single_quote(input)}',
                 '{_escape_single_quote(output)}'
             );
         """
@@ -253,11 +253,9 @@ def _display_update_log(selected_row):
             prompt_old = selected_row.get("prompt")
             prompt = st.text_area("prompt", value=prompt_old, height=50, disabled=True)
 
-            input_old = selected_row.get("input")
-            input = st.text_area("input", value=input_old, height=30, disabled=True)
-        comment_old = selected_row.get("comment")
-        comment = st.text_input("comment", value=comment_old)
-        if comment != comment_old: data.update({"comment" : comment})
+            comment_old = selected_row.get("comment")
+            comment = st.text_input("comment", value=comment_old, height=50)
+            if comment != comment_old: data.update({"comment" : comment})
 
         st.session_state.update({"LOG_UPDATE_DATA": data})
         # print(data)
@@ -301,7 +299,7 @@ def _display_grid_gpt3_log():
         st.write("Note: you may need to double-click Delete or Update button to commit changes")
         with DBConn(CFG["DB_FILE"]) as _conn:
             sql_stmt = f"""
-                select ts,use_case,output,valid_output,comment,prompt,input,settings,uuid
+                select ts,use_case,output,valid_output,comment,prompt,settings,uuid
                 from {TABLE_GPT3_LOG} order by ts desc
                 ;
             """
@@ -313,7 +311,30 @@ def _display_grid_gpt3_log():
                     _display_delete_log(selected_rows[0])
                     _display_update_log(selected_rows[0])
 
+def _execute_code_sql(code):
+    with DBConn(CFG["DB_FILE"]) as _conn:
+        df = pd.read_sql(code, _conn)
+        if df is not None and df.shape[0]:
+            st.dataframe(df)
 
+def _execute_code_python(code):
+    # https://stackoverflow.com/questions/11914472/how-to-use-stringio-in-python3
+    # create file-like string to capture output
+    codeOut = StringIO()
+    codeErr = StringIO()
+    # capture output and errors
+    sys.stdout = codeOut
+    sys.stderr = codeErr
+    # https://stackoverflow.com/questions/54840271/why-do-i-get-nameerror-name-is-not-defined-with-exec
+    # use globals()
+    exec(compile(code, "", 'exec'), globals(), globals())
+    # restore stdout and stderr
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+    if codeOut and codeOut.getvalue():
+        st.info(codeOut.getvalue())
+    if codeErr and codeErr.getvalue():
+        st.error(codeErr.getvalue())
 
 #####################################################
 # Menu Handlers
@@ -389,7 +410,7 @@ def do_code_gen():
             resp_str = response["choices"][0]["text"]
             st.info(resp_str)
             st.session_state["GENERATED_CODE"] = resp_str
-            _insert_log(use_case=openai_use_case, settings=str(settings_dict), prompt=prompt_str, input="", output=resp_str)
+            _insert_log(use_case=openai_use_case, settings=str(settings_dict), prompt=prompt_str,  output=resp_str)
         except:
             st.error(format_exc())
 
@@ -412,16 +433,17 @@ def do_code_run():
     gen_code_val = gen_code or output
     gen_code = st.text_area("Generated Code:", value=gen_code_val, height=200)
     if gen_code and st.button("Run ..."):
-        if use_case == "SQL":
-            with DBConn(CFG["DB_FILE"]) as _conn:
-                try:
-                    df = pd.read_sql(gen_code, _conn)
-                    st.dataframe(df)
-                except:
-                    st.error(format_exc())
+        try:
+            if use_case.lower() == "sql":
+                _execute_code_sql(gen_code)
+            if use_case.lower() == "python":
+                _execute_code_python(gen_code)
+            else:
+                st.warning(f"Executing {use_case} is not implemented, please use language-specific interpreter to validate the code.")
+        except:
+            st.error(format_exc())
 
-        else:
-            st.error(f"Executing {use_case} is not yet implemented")
+
 
 def do_sqlite_sample_db():
     st.subheader(f"{_STR_MENU_SQLITE_SAMPLE}")
