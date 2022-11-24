@@ -1,8 +1,14 @@
 """
 Streamlit app to experiment with GPT3 models for code generation (SQL, Python)
+
+- request/response are logged into SQLite Database
+- SQL can be validated against sample db
+- Python can be validated because streamlit uses python
+- Javascript can be validated using Dev Console of a native browser
+
 """
-__author__ = "wen.gong"
-SRC_URL = "https://github.com/wgong/gpt3codex"
+__author__ = "wgong"
+SRC_URL = "https://github.com/wgong/gpt3sql"
 
 #####################################################
 # Imports
@@ -590,6 +596,7 @@ def do_welcome():
     - [Documentation](https://beta.openai.com/docs)
     - [Examples](https://beta.openai.com/examples)
     - [Playground](https://beta.openai.com/playground?mode=complete)
+    - [Community](https://community.openai.com/)
 
     This [Streamlit App](https://streamlit.io/) helps explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) for code generation   ([src]({SRC_URL}))
     - Experiment with GPT-3 capability via API call locally;
@@ -841,22 +848,7 @@ def do_sidebar():
         menu_item = st.selectbox("", menu_options, index=default_ix, key="menu_item")
         # keep menu item in the same order as i18n strings
 
-        if menu_item == _STR_MENU_HOME:
-            pass
-
-        elif menu_item == _STR_MENU_SQL_GEN_RUN:
-            pass
-
-        elif menu_item == _STR_MENU_SQL_GEN:
-            pass
-
-        elif menu_item == _STR_MENU_SQL_RUN:
-            pass
-
-        elif menu_item == _STR_MENU_SQLITE_SAMPLE:
-            pass
-
-        elif menu_item == _STR_MENU_SETTINGS:
+        if menu_item in menu_options:
             pass
 
 # body
