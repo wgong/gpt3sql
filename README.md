@@ -84,7 +84,10 @@ SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
 
 ### Others
 
-- [SUSTAINABLE AI: ENVIRONMENTAL IMPLICATIONS, CHALLENGES AND OPPORTUNITIES](https://proceedings.mlsys.org/paper/2022/file/ed3d2c21991e3bef5e069713af9fa6ca-Paper.pdf)
+
 - [Prompt Engineering: The Career of Future](https://medium.com/nerd-for-tech/prompt-engineering-the-career-of-future-2fb93f90f117)
+- [Are You Intelligent Enough To Become An AI Enhanced Human?](https://community.openai.com/t/are-you-intelligent-enough-to-become-an-ai-enhanced-human/22173)
+
+- [SUSTAINABLE AI: ENVIRONMENTAL IMPLICATIONS, CHALLENGES AND OPPORTUNITIES](https://proceedings.mlsys.org/paper/2022/file/ed3d2c21991e3bef5e069713af9fa6ca-Paper.pdf)
 
 ## Credits

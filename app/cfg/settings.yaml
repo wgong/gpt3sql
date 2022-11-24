@@ -1,44 +1,46 @@
-## Playground Settings
+API_KEY_FILE: cfg/api_key.yaml    # stores your own API key
+DB_FILE: db/gpt3sql.sqlite
+Frequency_penalty: 0.0
+Input_prefix: 'input: '
+Input_suffix: '
 
-Mode: 
-  - "Complete"
-
+  '
+Maximum_length: 2048
+Mode:
+- Complete
 Model:
-  - text-davinci-002
-  - text-davinci-001
-  - text-curie-001
-  - text-babbage-001
-  - text-ada-001
-  - davinci-instruct-beta
-  - code-davinci-002
-  - code-cushman-001
-  - code-davinci-001
+- code-davinci-002
+- text-davinci-002
+- text-davinci-001
+- text-curie-001
+- text-babbage-001
+- text-ada-001
+- davinci-instruct-beta
+- code-cushman-001
+- code-davinci-001
+Output_prefix: 'output: '
+Output_suffix: '
 
+
+  '
+Presence_penalty: 0.0
+Temperature: 0.41
+Top_p: 1.0
 Use_case:
-  - SQL
-  - Python
-  - JavaScript
-  - Go
-  - Others
-  - Perl
-  - PHP
-  - Ruby
-  - Swift
-  - TypeScript
-  - Shell
-
-Temperature: 0.1
-Maximum_length: 256
-Input_prefix: "input: "
-Input_suffix: "\n"
-Output_prefix: "output: "
-Output_suffix: "\n\n"
-
-# Database to store OpenAI request/responses
-DB_FILE: "db/gpt3sql.sqlite"
-
-API_KEY_FILE: "cfg/api_key.yaml"
-## place your own OpenAI API Key in above file
-## as follows
-# OPENAI_API_KEY: <ENTER-Your-Own-API-Key>
-
+- SQL
+- Python
+- AWS
+- Explain
+- Ask_Anything
+- Math
+- Science
+- Others
+- JavaScript
+- Go
+- Perl
+- PHP
+- R
+- Ruby
+- Swift
+- TypeScript
+- Shell

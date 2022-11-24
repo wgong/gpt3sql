@@ -36,3 +36,29 @@ where s.date like 'June 2020'
 group by d.name
 having count(*) > 10
 
+
+Chinook SQLite DB
+
+Table invoices, columns=[InvoiceId, CustomerId, InvoiceDate, BillingState, Total]
+Table invoice_items, columns=[InvoiceId, TrackId, UnitPrice, Quantity]
+Table customers, columns=[CustomerId, FirstName,  LastName, State, Country, Email]
+Table albums, columns = [AlbumId, Title, ArtistId]
+Table tracks, columns = [TrackId, Name, AlbumId]
+Table artists, columns = [ArtistId, Name]
+Table media_types, columns = [MediaTypeId, Name]
+Table playlists, columns = [PlaylistId, Name]
+Table playlist_track, columns = [PlaylistId, TrackId]
+
+Create me a SQLite query for all customers in city of Cupertino from country of USA
+
+Create a SQLite query for total revenue in last year
+
+Create a SQLite query for top 3 customers who purchased the most albums in last year
+
+Create a SQLite query for top 5 albums that were sold the most in last year
+
+SELECT t.AlbumId, a.Title, COUNT(t.TrackId) AS tracks_sold FROM invoice_items AS i INNER JOIN tracks AS t ON i.TrackId = t.TrackId INNER JOIN albums AS a ON t.AlbumId = a.AlbumId INNER JOIN invoices AS n ON i.InvoiceId = n.InvoiceId WHERE n.InvoiceDate >= '2011-01-01' GROUP BY 1
+
+ i.InvoiceDate >= '2011-01-01'
+
+
