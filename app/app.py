@@ -668,7 +668,7 @@ def do_code_gen(show_response=True, show_header=True):
         st.info("""For non-code-generation use cases, 
             choose text-davinci-002 model.""")
 
-    c_1, c_2, c_3, _, _, _ = st.columns(6)
+    c_1, c_2, _, _, _, _ = st.columns(6)
     with c_1:
         insert_prompts = st.checkbox(f"insert delimitor {PROMPT_DELIMITOR}", value=True)
     with c_2:
