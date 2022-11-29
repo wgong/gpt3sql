@@ -1,4 +1,5 @@
 Model Name| Description| Strength
+"text-davinci-003"| "It produces higher quality writing. This will help your applications deliver clearer, more engaging, and more compelling content; It can handle more complex instructions, meaning you can get even more creative with how you make use of its capabilities now; It’s better at longer form content generation, allowing you to take on tasks that would have previously been too difficult to achieve. "  | ""
 "text-davinci-002"| "Most capable model in the GPT-3 series. Can perform any task the other models can, often with less context. It can process up to 4000 tokens per request."| "complex intent, cause and effect, creative generation, search, summarization for audience."
 "text-davinci-001"| "Older version of text-davinci-002 model"| "complex intent, cause and effect, creative generation, search, summarization for audience."
 "text-curie-001"| "Very capable, but faster and lower cost than text-davinci-002 model", "Language translation, complext classification, sentiment, summarization."

@@ -396,7 +396,7 @@ def _display_grid_df(df,
 
 
 def _display_grid_gpt3_log(page_size=10, grid_height=370):
-    with st.expander("Review GPT-3 logs: ", expanded=False):
+    with st.expander("Review logs of promp/response: ", expanded=False):
         df_log = _select_log()
         _display_refresh_log()
 

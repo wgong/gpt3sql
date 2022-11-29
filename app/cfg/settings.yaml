@@ -1,4 +1,4 @@
-API_KEY_FILE: cfg/api_key.yaml    # stores your own API key
+API_KEY_FILE: cfg/api_key.yaml
 DB_FILE: db/gpt3sql.sqlite
 Frequency_penalty: 0.0
 Input_prefix: 'input: '
@@ -9,6 +9,7 @@ Maximum_length: 2048
 Mode:
 - Complete
 Model:
+- text-davinci-003
 - code-davinci-002
 - text-davinci-002
 - text-davinci-001
@@ -24,7 +25,7 @@ Output_suffix: '
 
   '
 Presence_penalty: 0.0
-Temperature: 0.41
+Temperature: 0.49
 Top_p: 1.0
 Use_case:
 - SQL
