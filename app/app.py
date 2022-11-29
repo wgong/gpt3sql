@@ -846,7 +846,7 @@ def do_sidebar():
     with st.sidebar:
         st.markdown(f"<h1><font color=red>{_STR_APP_NAME}</font></h1>",unsafe_allow_html=True) 
 
-        menu_item = st.selectbox("", menu_options, index=default_ix, key="menu_item")
+        menu_item = st.selectbox("Menu:", menu_options, index=default_ix, key="menu_item")
         # keep menu item in the same order as i18n strings
 
         if menu_item in menu_options:
