@@ -597,6 +597,7 @@ def do_welcome():
     - [Examples](https://beta.openai.com/examples)
     - [Playground](https://beta.openai.com/playground?mode=complete)
     - [Community](https://community.openai.com/)
+    - [Wikipedia](https://en.wikipedia.org/wiki/GPT-3)
 
     This [Streamlit App](https://streamlit.io/) helps explore [GPT-3 Codex capability](https://beta.openai.com/docs/guides/code/introduction) for code generation   ([src]({SRC_URL}))
     - Experiment with GPT-3 capability via API call locally;
@@ -604,7 +605,7 @@ def do_welcome():
     - Validate generated Python because Streamlit is built on python;
     - Validate generated JavaScript in native brower developer console;
 
-    Instead of `code-davinci-002` model, however, one can perform many tasks by choosing `text-davinci-002` or other models. 
+    Instead of `code-davinci-002` model, however, one can perform many tasks by choosing `text-davinci-003` or other models. 
 
     #### [OpenAI models](https://beta.openai.com/docs/models/overview)
 
