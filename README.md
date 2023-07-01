@@ -82,6 +82,7 @@ SELECT * FROM customers WHERE State='TX' AND FirstName='Jane'
 - [SQLite Tutorial](https://www.sqlitetutorial.net/)
 - [Automating my job by using GPT-3 to generate database-ready SQL to answer business questions](https://blog.seekwell.io/gpt3)
 
+- [Text-to-SQL Generation for Question Answering on Electronic Medical Records](https://github.com/wangpinggl/TREQS)
 ### Others
 
 

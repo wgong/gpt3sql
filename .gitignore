@@ -1,5 +1,5 @@
 **/api/
-**/api_key*.yaml
+**/*api_key*.yaml
 **/settings*Copy.yaml
 **/Untitled*.ipynb
 **/gpt3sql-*.sqlite
