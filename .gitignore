@@ -1,8 +1,8 @@
-**/api/
 **/*api_key*.yaml
 **/settings*Copy.yaml
 **/Untitled*.ipynb
 **/gpt3sql-*.sqlite
+dev/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

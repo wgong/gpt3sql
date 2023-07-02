@@ -707,7 +707,8 @@ def do_code_gen(show_response=True, show_header=True):
         if remove_leading_hash:
             prompt_str = _remove_leading_hash(prompt_str)
 
-        # st.info(prompt_str)
+        # st.info(settings_dict)
+    
         try:
             response = openai.Completion.create(
                 model=openai_model, 

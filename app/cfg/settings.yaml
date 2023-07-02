@@ -5,20 +5,15 @@ Input_prefix: 'input: '
 Input_suffix: '
 
   '
-Maximum_length: 2048
+Maximum_length: 2024
 Mode:
 - Complete
 Model:
-- text-davinci-003
-- code-davinci-002
 - text-davinci-002
 - text-davinci-001
 - text-curie-001
 - text-babbage-001
 - text-ada-001
-- davinci-instruct-beta
-- code-cushman-001
-- code-davinci-001
 Output_prefix: 'output: '
 Output_suffix: '
 
@@ -28,8 +23,8 @@ Presence_penalty: 0.0
 Temperature: 0.49
 Top_p: 1.0
 Use_case:
-- SQL
 - Python
+- SQL
 - AWS
 - Explain
 - Ask_Anything
