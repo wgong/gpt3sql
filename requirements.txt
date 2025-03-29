@@ -1,3 +1,7 @@
-streamlit>=1.13.0<=1.14.1
-streamlit-aggrid>=0.3.3
+# streamlit>=1.13.0<=1.14.1
+# streamlit-aggrid>=0.3.3
+# openai>=0.23.1
+
+streamlit
+streamlit-aggrid==0.3.5
 openai>=0.23.1
